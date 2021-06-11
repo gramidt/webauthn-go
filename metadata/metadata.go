@@ -1,41 +1,121 @@
 package metadata
 
 import (
-	"bytes"
-	"crypto"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/cloudflare/cfssl/revoke"
-	"github.com/mitchellh/mapstructure"
-	uuid "github.com/satori/go.uuid"
-
-	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// Metadata is a map of authenticator AAGUIDs to corresponding metadata statements
-var Metadata = make(map[uuid.UUID]MetadataTOCPayloadEntry)
 
-// Conformance indicates if test metadata is currently being used
-var Conformance = false
+type MetadataBLOBPayload struct {
+	//The legalHeader, which MUST be in each BLOB, is an indication of the acceptance of the relevant legal agreement for using the MDS. The FIDO Alliance’s Blob will contain this legal header: "legalHeader": "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
+	LegalHeader string `json:"legalHeader"`
+	//The serial number of this UAF Metadata BLOB Payload. Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a no value exactly incremented by one.
+	Number int `json:"no"`
+	// ISO-8601 formatted date when the next update will be provided at latest.
+	NextUpdate string `json:"nextUpdate"`
+	// List of zero or more MetadataBLOBPayloadEntry objects.
+	Entries []MetadataBLOBPayloadEntry `json:"entries"`
+}
 
-// AuthenticatorAttestationType - The ATTESTATION constants are 16 bit long integers indicating the specific attestation that authenticator supports.
-type AuthenticatorAttestationType uint16
+func (m *MetadataBLOBPayload) Valid() error {
+	err := m.VerifyEntries()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-const (
-	// BasicFull - Indicates full basic attestation, based on an attestation private key shared among a class of authenticators (e.g. same model). Authenticators must provide its attestation signature during the registration process for the same reason. The attestation trust anchor is shared with FIDO Servers out of band (as part of the Metadata). This sharing process should be done according to [UAFMetadataService].
-	BasicFull AuthenticatorAttestationType = 0x3E07
-	// BasicSurrogate - Just syntactically a Basic Attestation. The attestation object self-signed, i.e. it is signed using the UAuth.priv key, i.e. the key corresponding to the UAuth.pub key included in the attestation object. As a consequence it does not provide a cryptographic proof of the security characteristics. But it is the best thing we can do if the authenticator is not able to have an attestation private key.
-	BasicSurrogate AuthenticatorAttestationType = 0x3E08
-	// Ecdaa - Indicates use of elliptic curve based direct anonymous attestation as defined in [FIDOEcdaaAlgorithm]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
-	Ecdaa AuthenticatorAttestationType = 0x3E09
-	// AttCA - Indicates PrivacyCA attestation as defined in [TCG-CMCProfile-AIKCertEnroll]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
-	AttCA AuthenticatorAttestationType = 0x3E0A
-)
+func (m *MetadataBLOBPayload) VerifyEntries() error {
+	if m.Entries == nil || len(m.Entries) == 0 {
+		return errors.New("entries must not be nil or empty")
+	}
+	return nil
+}
+
+type MetadataBLOBPayloadEntry struct {
+	//The AAID of the authenticator this metadata BLOB payload entry relates to. See [UAFProtocol] for the definition of the AAID structure. This field MUST be set if the authenticator implements FIDO UAF.
+	Aaid string `json:"aaid"`
+	// The Authenticator Attestation GUID. See [FIDOKeyAttestation] for the definition of the AAGUID structure. This field MUST be set if the authenticator implements FIDO2.
+	AaGUID string `json:"aaguid"`
+	// A list of the attestation certificate public key identifiers encoded as hex string.
+	AttestationCertificateKeyIdentifiers []string `json:"attestationCertificateKeyIdentifiers"`
+	//The metadataStatement JSON object as defined in [FIDOMetadataStatement].
+	MetadataStatement MetadataStatement `json:"metadataStatement"`
+	// Status of the FIDO Biometric Certification of one or more biometric components of the Authenticator
+	BiometricStatusReports []BiometricStatusReport `json:"biometricStatusReports"`
+	// An array of status reports applicable to this authenticator.
+	StatusReports []StatusReport `json:"statusReports"`
+	// ISO-8601 formatted date since when the status report array was set to the current value.
+	TimeOfLastStatusChange string `json:"timeOfLastStatusChange"`
+	// URL of a list of rogue (i.e. untrusted) individual authenticators.
+	RogueListURL string `json:"rogueListURL"`
+	// The hash value computed over the Base64url encoding of the UTF-8 representation of the JSON encoded rogueList available at rogueListURL (with type rogueListEntry[]).
+	RogueListHash string `json:"rogueListHash"`
+}
+
+// MetadataStatement - Authenticator metadata statements are used directly by the FIDO server at a relying party, but the information contained in the authoritative statement is used in several other places.
+type MetadataStatement struct {
+	// The legalHeader, if present, contains a legal guide for accessing and using metadata, which itself MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
+	LegalHeader string `json:"legalHeader"`
+	// Schema Numerical identifier of the schema. Use this to check if you are dealing with old or new metadata.
+	Schema uint16 `json:"schema"`
+	// The Authenticator Attestation ID.
+	Aaid string `json:"aaid"`
+	// The Authenticator Attestation GUID.
+	AaGUID string `json:"aaguid"`
+	// A list of the attestation certificate public key identifiers encoded as hex string.
+	AttestationCertificateKeyIdentifiers []string `json:"attestationCertificateKeyIdentifiers"`
+	// A human-readable, short description of the authenticator, in English.
+	Description string `json:"description"`
+	// A list of human-readable short descriptions of the authenticator in different languages.
+	AlternativeDescriptions map[string]string `json:"alternativeDescriptions"`
+	// Earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement.
+	AuthenticatorVersion uint16 `json:"authenticatorVersion"`
+	// The FIDO protocol family. The values "uaf", "u2f", and "fido2" are supported.
+	ProtocolFamily string `json:"protocolFamily"`
+	// The FIDO unified protocol version(s) (related to the specific protocol family) supported by this authenticator.
+	Upv []Version `json:"upv"`
+	// The list of authentication algorithms supported by the authenticator.
+	AuthenticationAlgorithms []string `json:"authenticationAlgorithms"`
+	// The list of public key formats supported by the authenticator during registration operations.
+	PublicKeyAlgAndEncodings []string `json:"publicKeyAlgAndEncodings"`
+	// The supported attestation type(s).
+	AttestationTypes []string `json:"attestationTypes"`
+	// A list of alternative VerificationMethodANDCombinations.
+	UserVerificationDetails [][]VerificationMethodDescriptor `json:"userVerificationDetails"`
+	// A 16-bit number representing the bit fields defined by the KEY_PROTECTION constants in the FIDO Registry of Predefined Values
+	KeyProtection []string `json:"keyProtection"`
+	// This entry is set to true or it is omitted, if the Uauth private key is restricted by the authenticator to only sign valid FIDO signature assertions.
+	// This entry is set to false, if the authenticator doesn't restrict the Uauth key to only sign valid FIDO signature assertions.
+	IsKeyRestricted bool `json:"isKeyRestricted"`
+	// This entry is set to true or it is omitted, if Uauth key usage always requires a fresh user verification
+	// This entry is set to false, if the Uauth key can be used without requiring a fresh user verification, e.g. without any additional user interaction, if the user was verified a (potentially configurable) caching time ago.
+	IsFreshUserVerificationRequired bool `json:"isFreshUserVerificationRequired"`
+	// A 16-bit number representing the bit fields defined by the MATCHER_PROTECTION constants in the FIDO Registry of Predefined Values
+	MatcherProtection []string `json:"matcherProtection"`
+	// The authenticator's overall claimed cryptographic strength in bits (sometimes also called security strength or security level).
+	CryptoStrength uint16 `json:"cryptoStrength"`
+	// A string array representing the bit fields defined by the ATTACHMENT_HINT constants in the FIDO Registry of Predefined Values
+	AttachmentHint []string `json:"attachmentHint"`
+	// A 16-bit number representing a combination of the bit flags defined by the TRANSACTION_CONFIRMATION_DISPLAY constants in the FIDO Registry of Predefined Values
+	TcDisplay []string `json:"tcDisplay"`
+	// Supported MIME content type [RFC2049] for the transaction confirmation display, such as text/plain or image/png.
+	TcDisplayContentType string `json:"tcDisplayContentType"`
+	// A list of alternative DisplayPNGCharacteristicsDescriptor. Each of these entries is one alternative of supported image characteristics for displaying a PNG image.
+	TcDisplayPNGCharacteristics []DisplayPNGCharacteristicsDescriptor `json:"tcDisplayPNGCharacteristics"`
+	// Each element of this array represents a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
+	// Multiple certificates might be used for different batches of the same model.
+	// The array does not represent a certificate chain, but only the trust anchor of that chain.
+	// A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
+	AttestationRootCertificates []string `json:"attestationRootCertificates"`
+	// A list of trust anchors used for ECDAA attestation. This entry MUST be present if and only if attestationType includes ATTESTATION_ECDAA.
+	EcdaaTrustAnchors []EcdaaTrustAnchor `json:"ecdaaTrustAnchors"`
+	// A data: url [RFC2397] encoded PNG [PNG] icon for the Authenticator.
+	Icon string `json:"icon"`
+	// List of extensions supported by the authenticator.
+	SupportedExtensions []ExtensionDescriptor `json:"supportedExtensions"`
+	//TODO add authenticatorGetInfo
+
+}
 
 // AuthenticatorStatus - This enumeration describes the status of an authenticator model as identified by its AAID and potentially some additional information (such as a specific attestation key).
 type AuthenticatorStatus string
@@ -130,49 +210,12 @@ type BiometricStatusReport struct {
 	CertificationRequirementsVersion string `json:"certificationRequirementsVersion"`
 }
 
-// MetadataTOCPayloadEntry - Represents the MetadataTOCPayloadEntry
-type MetadataTOCPayloadEntry struct {
-	// The AAID of the authenticator this metadata TOC payload entry relates to.
-	Aaid string `json:"aaid"`
-	// The Authenticator Attestation GUID.
-	AaGUID string `json:"aaguid"`
-	// A list of the attestation certificate public key identifiers encoded as hex string.
-	AttestationCertificateKeyIdentifiers []string `json:"attestationCertificateKeyIdentifiers"`
-	// The hash value computed over the base64url encoding of the UTF-8 representation of the JSON encoded metadata statement available at url and as defined in [FIDOMetadataStatement].
-	Hash string `json:"hash"`
-	// Uniform resource locator (URL) of the encoded metadata statement for this authenticator model (identified by its AAID, AAGUID or attestationCertificateKeyIdentifier).
-	URL string `json:"url"`
-	// Status of the FIDO Biometric Certification of one or more biometric components of the Authenticator
-	BiometricStatusReports []BiometricStatusReport `json:"biometricStatusReports"`
-	// An array of status reports applicable to this authenticator.
-	StatusReports []StatusReport `json:"statusReports"`
-	// ISO-8601 formatted date since when the status report array was set to the current value.
-	TimeOfLastStatusChange string `json:"timeOfLastStatusChange"`
-	// URL of a list of rogue (i.e. untrusted) individual authenticators.
-	RogueListURL string `json:"rogueListURL"`
-	// The hash value computed over the Base64url encoding of the UTF-8 representation of the JSON encoded rogueList available at rogueListURL (with type rogueListEntry[]).
-	RogueListHash     string `json:"rogueListHash"`
-	MetadataStatement MetadataStatement
-}
-
 // RogueListEntry - Contains a list of individual authenticators known to be rogue
 type RogueListEntry struct {
 	// Base64url encoding of the rogue authenticator's secret key
 	Sk string `json:"sk"`
 	// ISO-8601 formatted date since when this entry is effective.
 	Date string `json:"date"`
-}
-
-// MetadataTOCPayload - Represents the MetadataTOCPayload
-type MetadataTOCPayload struct {
-	// The legalHeader, if present, contains a legal guide for accessing and using metadata, which itself MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
-	LegalHeader string `json:"legalHeader"`
-	// The serial number of this UAF Metadata TOC Payload. Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor TOC will have a no value exactly incremented by one.
-	Number int `json:"no"`
-	// ISO-8601 formatted date when the next update will be provided at latest.
-	NextUpdate string `json:"nextUpdate"`
-	// List of zero or more MetadataTOCPayloadEntry objects.
-	Entries []MetadataTOCPayloadEntry `json:"entries"`
 }
 
 // Version - Represents a generic version with major and minor fields.
@@ -216,7 +259,7 @@ type BiometricAccuracyDescriptor struct {
 // The PatternAccuracyDescriptor describes relevant accuracy/complexity aspects in the case that a pattern is used as the user verification method.
 type PatternAccuracyDescriptor struct {
 	// Number of possible patterns (having the minimum length) out of which exactly one would be the right one, i.e. 1/probability in the case of equal distribution.
-	MinComplexity uint32 `json:"minComplexity"`
+	MinComplexity uint64 `json:"minComplexity"`
 	// Maximum number of false attempts before the authenticator will block authentication using this method (at least temporarily). 0 means it will never block.
 	MaxRetries uint16 `json:"maxRetries"`
 	// Enforced minimum number of seconds wait time after blocking (due to forced reboot or similar mechanism).
@@ -300,321 +343,4 @@ type ExtensionDescriptor struct {
 	Data string `json:"data"`
 	// Indicates whether unknown extensions must be ignored (false) or must lead to an error (true) when the extension is to be processed by the FIDO Server, FIDO Client, ASM, or FIDO Authenticator.
 	FailIfUnknown bool `json:"fail_if_unknown"`
-}
-
-// MetadataStatement - Authenticator metadata statements are used directly by the FIDO server at a relying party, but the information contained in the authoritative statement is used in several other places.
-type MetadataStatement struct {
-	// The legalHeader, if present, contains a legal guide for accessing and using metadata, which itself MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
-	LegalHeader string `json:"legalHeader"`
-	// The Authenticator Attestation ID.
-	Aaid string `json:"aaid"`
-	// The Authenticator Attestation GUID.
-	AaGUID string `json:"aaguid"`
-	// A list of the attestation certificate public key identifiers encoded as hex string.
-	AttestationCertificateKeyIdentifiers []string `json:"attestationCertificateKeyIdentifiers"`
-	// A human-readable, short description of the authenticator, in English.
-	Description string `json:"description"`
-	// A list of human-readable short descriptions of the authenticator in different languages.
-	AlternativeDescriptions map[string]string `json:"alternativeDescriptions"`
-	// Earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement.
-	AuthenticatorVersion uint16 `json:"authenticatorVersion"`
-	// The FIDO protocol family. The values "uaf", "u2f", and "fido2" are supported.
-	ProtocolFamily string `json:"protocolFamily"`
-	// The FIDO unified protocol version(s) (related to the specific protocol family) supported by this authenticator.
-	Upv []Version `json:"upv"`
-	// The assertion scheme supported by the authenticator.
-	AssertionScheme string `json:"assertionScheme"`
-	// The preferred authentication algorithm supported by the authenticator.
-	AuthenticationAlgorithm uint16 `json:"authenticationAlgorithm"`
-	// The list of authentication algorithms supported by the authenticator.
-	AuthenticationAlgorithms []uint16 `json:"authenticationAlgorithms"`
-	// The preferred public key format used by the authenticator during registration operations.
-	PublicKeyAlgAndEncoding uint16 `json:"publicKeyAlgAndEncoding"`
-	// The list of public key formats supported by the authenticator during registration operations.
-	PublicKeyAlgAndEncodings []uint16 `json:"publicKeyAlgAndEncodings"`
-	// The supported attestation type(s).
-	AttestationTypes []uint16 `json:"attestationTypes"`
-	// A list of alternative VerificationMethodANDCombinations.
-	UserVerificationDetails [][]VerificationMethodDescriptor `json:"userVerificationDetails"`
-	// A 16-bit number representing the bit fields defined by the KEY_PROTECTION constants in the FIDO Registry of Predefined Values
-	KeyProtection uint16 `json:"keyProtection"`
-	// This entry is set to true or it is omitted, if the Uauth private key is restricted by the authenticator to only sign valid FIDO signature assertions.
-	// This entry is set to false, if the authenticator doesn't restrict the Uauth key to only sign valid FIDO signature assertions.
-	IsKeyRestricted bool `json:"isKeyRestricted"`
-	// This entry is set to true or it is omitted, if Uauth key usage always requires a fresh user verification
-	// This entry is set to false, if the Uauth key can be used without requiring a fresh user verification, e.g. without any additional user interaction, if the user was verified a (potentially configurable) caching time ago.
-	IsFreshUserVerificationRequired bool `json:"isFreshUserVerificationRequired"`
-	// A 16-bit number representing the bit fields defined by the MATCHER_PROTECTION constants in the FIDO Registry of Predefined Values
-	MatcherProtection uint16 `json:"matcherProtection"`
-	// The authenticator's overall claimed cryptographic strength in bits (sometimes also called security strength or security level).
-	CryptoStrength uint16 `json:"cryptoStrength"`
-	// Description of the particular operating environment that is used for the Authenticator.
-	OperatingEnv string `json:"operatingEnv"`
-	// A 32-bit number representing the bit fields defined by the ATTACHMENT_HINT constants in the FIDO Registry of Predefined Values
-	AttachmentHint uint32 `json:"attachmentHint"`
-	// Indicates if the authenticator is designed to be used only as a second factor, i.e. requiring some other authentication method as a first factor (e.g. username+password).
-	IsSecondFactorOnly bool `json:"isSecondFactorOnly"`
-	// A 16-bit number representing a combination of the bit flags defined by the TRANSACTION_CONFIRMATION_DISPLAY constants in the FIDO Registry of Predefined Values
-	TcDisplay uint16 `json:"tcDisplay"`
-	// Supported MIME content type [RFC2049] for the transaction confirmation display, such as text/plain or image/png.
-	TcDisplayContentType string `json:"tcDisplayContentType"`
-	// A list of alternative DisplayPNGCharacteristicsDescriptor. Each of these entries is one alternative of supported image characteristics for displaying a PNG image.
-	TcDisplayPNGCharacteristics []DisplayPNGCharacteristicsDescriptor `json:"tcDisplayPNGCharacteristics"`
-	// Each element of this array represents a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
-	// Multiple certificates might be used for different batches of the same model.
-	// The array does not represent a certificate chain, but only the trust anchor of that chain.
-	// A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
-	AttestationRootCertificates []string `json:"attestationRootCertificates"`
-	// A list of trust anchors used for ECDAA attestation. This entry MUST be present if and only if attestationType includes ATTESTATION_ECDAA.
-	EcdaaTrustAnchors []EcdaaTrustAnchor `json:"ecdaaTrustAnchors"`
-	// A data: url [RFC2397] encoded PNG [PNG] icon for the Authenticator.
-	Icon string `json:"icon"`
-	// List of extensions supported by the authenticator.
-	SupportedExtensions []ExtensionDescriptor `json:"supportedExtensions"`
-}
-
-// MDSGetEndpointsRequest is the request sent to the conformance metadata getEndpoints endpoint
-type MDSGetEndpointsRequest struct {
-	// The URL of the local server endpoint, e.g. https://webauthn.io/
-	Endpoint string `json:"endpoint"`
-}
-
-// MDSGetEndpointsResponse is the response received from a conformance metadata getEndpoints request
-type MDSGetEndpointsResponse struct {
-	// The status of the response
-	Status string `json:"status"`
-	// An array of urls, each pointing to a MetadataTOCPayload
-	Result []string `json:"result"`
-}
-
-// ProcessMDSTOC processes a FIDO metadata table of contents object per §3.1.8, steps 1 through 5
-// FIDO Authenticator Metadata Service
-// https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#metadata-toc-object-processing-rules
-func ProcessMDSTOC(url string, suffix string, c http.Client) (MetadataTOCPayload, string, error) {
-	var tocAlg string
-	var payload MetadataTOCPayload
-	// 1. The FIDO Server MUST be able to download the latest metadata TOC object from the well-known URL, when appropriate.
-	body, err := downloadBytes(url+suffix, c)
-	if err != nil {
-		return payload, tocAlg, err
-	}
-	// Steps 2 - 4 done in unmarshalMDSTOC.  Caller is responsible for step 5.
-	return unmarshalMDSTOC(body, c)
-}
-
-func unmarshalMDSTOC(body []byte, c http.Client) (MetadataTOCPayload, string, error) {
-	var tocAlg string
-	var payload MetadataTOCPayload
-	token, err := jwt.Parse(string(body), func(token *jwt.Token) (interface{}, error) {
-		// 2. If the x5u attribute is present in the JWT Header, then
-		if _, ok := token.Header["x5u"].([]interface{}); ok {
-			// never seen an x5u here, although it is in the spec
-			return nil, errors.New("x5u encountered in header of metadata TOC payload")
-		}
-		var chain []interface{}
-		// 3. If the x5u attribute is missing, the chain should be retrieved from the x5c attribute.
-
-		if x5c, ok := token.Header["x5c"].([]interface{}); !ok {
-			// If that attribute is missing as well, Metadata TOC signing trust anchor is considered the TOC signing certificate chain.
-			root, err := getMetdataTOCSigningTrustAnchor(c)
-			if nil != err {
-				return nil, err
-			}
-			chain[0] = root
-		} else {
-			chain = x5c
-		}
-
-		// The certificate chain MUST be verified to properly chain to the metadata TOC signing trust anchor
-		valid, err := validateChain(chain, c)
-		if !valid || err != nil {
-			return nil, err
-		}
-		// chain validated, extract the TOC signing certificate from the chain
-
-		// create a buffer large enough to hold the certificate bytes
-		o := make([]byte, base64.StdEncoding.DecodedLen(len(chain[0].(string))))
-		// base64 decode the certificate into the buffer
-		n, err := base64.StdEncoding.Decode(o, []byte(chain[0].(string)))
-		if err != nil {
-			return nil, err
-		}
-		// parse the certificate from the buffer
-		cert, err := x509.ParseCertificate(o[:n])
-		if err != nil {
-			return nil, err
-		}
-		// 4. Verify the signature of the Metadata TOC object using the TOC signing certificate chain
-		// jwt.Parse() uses the TOC signing certificate public key internally to verify the signature
-		return cert.PublicKey, err
-	})
-	if err != nil {
-		return payload, tocAlg, err
-	}
-
-	tocAlg = token.Header["alg"].(string)
-	err = mapstructure.Decode(token.Claims, &payload)
-
-	return payload, tocAlg, err
-}
-
-func getMetdataTOCSigningTrustAnchor(c http.Client) ([]byte, error) {
-	rooturl := ""
-	if Conformance {
-		rooturl = "https://fidoalliance.co.nz/mds/pki/MDSROOT.crt"
-	} else {
-		rooturl = "https://mds.fidoalliance.org/Root.cer"
-	}
-
-	return downloadBytes(rooturl, c)
-}
-
-func validateChain(chain []interface{}, c http.Client) (bool, error) {
-	root, err := getMetdataTOCSigningTrustAnchor(c)
-	if err != nil {
-		return false, err
-	}
-
-	roots := x509.NewCertPool()
-
-	ok := roots.AppendCertsFromPEM(root)
-	if !ok {
-		return false, err
-	}
-
-	o := make([]byte, base64.StdEncoding.DecodedLen(len(chain[1].(string))))
-	n, err := base64.StdEncoding.Decode(o, []byte(chain[1].(string)))
-	if err != nil {
-		return false, err
-	}
-	intcert, err := x509.ParseCertificate(o[:n])
-	if err != nil {
-		return false, err
-	}
-
-	if revoked, ok := revoke.VerifyCertificate(intcert); !ok {
-		return false, errCRLUnavailable
-	} else if revoked {
-		return false, errIntermediateCertRevoked
-	}
-
-	ints := x509.NewCertPool()
-	ints.AddCert(intcert)
-
-	l := make([]byte, base64.StdEncoding.DecodedLen(len(chain[0].(string))))
-	n, err = base64.StdEncoding.Decode(l, []byte(chain[0].(string)))
-	if err != nil {
-		return false, err
-	}
-	leafcert, err := x509.ParseCertificate(l[:n])
-	if err != nil {
-		return false, err
-	}
-	if revoked, ok := revoke.VerifyCertificate(leafcert); !ok {
-		return false, errCRLUnavailable
-	} else if revoked {
-		return false, errLeafCertRevoked
-	}
-
-	opts := x509.VerifyOptions{
-		Roots:         roots,
-		Intermediates: ints,
-	}
-	_, err = leafcert.Verify(opts)
-	return err == nil, err
-}
-
-// GetMetadataStatement iterates through a list of payload entries within a FIDO metadata table of contents object per §3.1.8, step 6
-// FIDO Authenticator Metadata Service
-// https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#metadata-toc-object-processing-rules
-func GetMetadataStatement(entry MetadataTOCPayloadEntry, suffix string, alg string, c http.Client) (MetadataStatement, error) {
-	var statement MetadataStatement
-	// 1. Ignore the entry if the AAID, AAGUID or attestationCertificateKeyIdentifiers is not relevant to the relying party (e.g. not acceptable by any policy)
-	// Caller is responsible for determining if entry is relevant.
-
-	// 2. Download the metadata statement from the URL specified by the field url.
-	body, err := downloadBytes(entry.URL+suffix, c)
-	if err != nil {
-		return statement, err
-	}
-	// 3. Check whether the status report of the authenticator model has changed compared to the cached entry by looking at the fields timeOfLastStatusChange and statusReport.
-	// Caller is responsible for cache
-
-	// step 4 done in unmarshalMetadataStatement, caller is responsible for step 5
-	return unmarshalMetadataStatement(body, entry.Hash)
-}
-
-func unmarshalMetadataStatement(body []byte, hash string) (MetadataStatement, error) {
-	// 4. Compute the hash value of the metadata statement downloaded from the URL and verify the hash value to the hash specified in the field hash of the metadata TOC object.
-	var statement MetadataStatement
-
-	entryHash, err := base64.URLEncoding.DecodeString(hash)
-	if err != nil {
-		entryHash, err = base64.RawURLEncoding.DecodeString(hash)
-	}
-	if err != nil {
-		return statement, err
-	}
-
-	// TODO: Get hasher based on MDS TOC alg instead of assuming SHA256
-	hasher := crypto.SHA256.New()
-	_, _ = hasher.Write(body)
-	hashed := hasher.Sum(nil)
-	// Ignore the downloaded metadata statement if the hash value doesn't match.
-	if !bytes.Equal(hashed, entryHash) {
-		return statement, errHashValueMismatch
-	}
-
-	// Extract the metadata statement from base64 encoded form
-	n := base64.URLEncoding.DecodedLen(len(body))
-	out := make([]byte, n)
-	m, err := base64.URLEncoding.Decode(out, body)
-	if err != nil {
-		return statement, err
-	}
-	// Unmarshal the metadata statement into a MetadataStatement structure and return it to caller
-	err = json.Unmarshal(out[:m], &statement)
-	return statement, err
-}
-
-func downloadBytes(url string, c http.Client) ([]byte, error) {
-	res, err := c.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-	return body, err
-}
-
-type MetadataError struct {
-	// Short name for the type of error that has occurred
-	Type string `json:"type"`
-	// Additional details about the error
-	Details string `json:"error"`
-	// Information to help debug the error
-	DevInfo string `json:"debug"`
-}
-
-var (
-	errHashValueMismatch = &MetadataError{
-		Type:    "hash_mismatch",
-		Details: "Hash value mismatch between entry.Hash and downloaded bytes",
-	}
-	errIntermediateCertRevoked = &MetadataError{
-		Type:    "intermediate_revoked",
-		Details: "Intermediate certificate is on issuers revocation list",
-	}
-	errLeafCertRevoked = &MetadataError{
-		Type:    "leaf_revoked",
-		Details: "Leaf certificate is on issuers revocation list",
-	}
-	errCRLUnavailable = &MetadataError{
-		Type:    "crl_unavailable",
-		Details: "Certificate revocation list is unavailable",
-	}
-)
-
-func (err *MetadataError) Error() string {
-	return err.Details
 }

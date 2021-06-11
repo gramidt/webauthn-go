@@ -1,88 +1,53 @@
 package metadata
 
-//func TestMetadataTOCParsing(t *testing.T) {
-//	Conformance = false
-//	httpClient := &http.Client{
-//		Timeout: time.Second * 30,
-//	}
-//
-//	tests := []struct {
-//		name    string
-//		file    string
-//		wantErr error
-//	}{
-//		{
-//			"success",
-//			"../testdata/MetadataTOCParsing-P1.jwt",
-//			errIntermediateCertRevoked,
-//		},
-//		{
-//			"verification_failure",
-//			"../testdata/MetadataTOCParsing-F1.jwt",
-//			errIntermediateCertRevoked,
-//		},
-//		{
-//			"intermediate_revoked",
-//			"../testdata/MetadataTOCParsing-F2.jwt",
-//			jwt.ErrECDSAVerification,
-//		},
-//		{
-//			"leaf_revoked",
-//			"../testdata/MetadataTOCParsing-F3.jwt",
-//			errLeafCertRevoked,
-//		},
-//		{
-//			"asn1_parse_error",
-//			"../testdata/MetadataTOCParsing-F4.jwt",
-//			errCRLUnavailable,
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			b, _ := ioutil.ReadFile(tt.file)
-//			_, _, err := unmarshalMDSTOC(b, *httpClient)
-//			failed := true
-//			if err != nil {
-//				failed = (err.Error() != tt.wantErr.Error())
-//			} else {
-//				failed = tt.wantErr != nil
-//			}
-//			if failed {
-//				t.Errorf("unmarshalMDSTOC() got %v, wanted %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
-//
-//func TestMetadataStatementParsing(t *testing.T) {
-//	tests := []struct {
-//		name    string
-//		file    string
-//		hash    string
-//		wantErr error
-//	}{
-//		{
-//			"success",
-//			"../testdata/TestMetadataStatementParsing-P1.json",
-//			"bEtEyoVkc-X-ypuFoAIj8s4xKKTZw3wzD7IuDnoBUE8",
-//			nil,
-//		},
-//		{
-//			"hash_value_mismatch",
-//			"../testdata/TestMetadataStatementParsing-F1.json",
-//			"eq28frELluGyBesOw_xE_10Tj25NG0pDS7Oa0DP2kVk",
-//			errHashValueMismatch,
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			b, _ := ioutil.ReadFile(tt.file)
-//			_, err := unmarshalMetadataStatement(b, tt.hash)
-//			if err != tt.wantErr {
-//				t.Errorf("unmarshalMetadataStatement() error %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
+import (
+	"crypto/x509"
+	"github.com/teamhanko/webauthn/metadata/certificate"
+	"io/ioutil"
+	"testing"
+)
+
+func TestMetadataLoad(t *testing.T) {
+	bytes, err := ioutil.ReadFile("./blob.jwt")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	roots, err := ioutil.ReadFile("./globalsign-root-ca.crt")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	certParser := certificate.PemCertificateParser{}
+	cert, err := certParser.Parse(roots)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	rootCerts := []*x509.Certificate{cert}
+	parser := &DefaultMetadataParserVerifier{}
+	jwt, err := parser.ParseAndVerifyMetadataBlob(string(bytes), rootCerts)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	metadata, ok := jwt.Claims.(*MetadataBLOBPayload)
+	if !ok {
+		t.Log("Type Assertion Failed...")
+		t.Fail()
+	}
+	t.Log(metadata)
+}
+
+func TestDefaultMetadataService(t *testing.T) {
+	def := NewDefaultMetadataService()
+	def.Fetch()
+	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
+	if statement == nil {
+		t.Fail()
+	}
+	statement = def.U2FAuthenticator("fd36573d24be3f7f32ad5040271ab61035a1fcad")
+	if statement == nil {
+		t.Fail()
+	}
+}
