@@ -2,7 +2,14 @@ package metadata
 
 import (
 	"errors"
+	uuid "github.com/satori/go.uuid"
 )
+
+// Metadata is a map of authenticator AAGUIDs to corresponding metadata statements
+var Metadata = make(map[uuid.UUID]MetadataBLOBPayloadEntry)
+
+// Conformance indicates if test metadata is currently being used
+var Conformance = false
 
 
 type MetadataBLOBPayload struct {
@@ -151,6 +158,21 @@ const (
 	FidoCertifiedL3 = "FIDO_CERTIFIED_L3"
 	// FidoCertifiedL3plus - The authenticator has passed FIDO Authenticator certification at level 3+. This level is more strict than level 3.
 	FidoCertifiedL3plus = "FIDO_CERTIFIED_L3plus"
+)
+
+type AuthenticatorAttestationType string
+//Attestation Types
+const (
+	// BasicFull - Indicates full basic attestation, based on an attestation private key shared among a class of authenticators (e.g. same model). Authenticators must provide its attestation signature during the registration process for the same reason. The attestation trust anchor is shared with FIDO Servers out of band (as part of the Metadata). This sharing process should be done according to [UAFMetadataService].
+	BasicFull AuthenticatorAttestationType = "basic_full"
+	// BasicSurrogate - Just syntactically a Basic Attestation. The attestation object self-signed, i.e. it is signed using the UAuth.priv key, i.e. the key corresponding to the UAuth.pub key included in the attestation object. As a consequence it does not provide a cryptographic proof of the security characteristics. But it is the best thing we can do if the authenticator is not able to have an attestation private key.
+	BasicSurrogate AuthenticatorAttestationType = "basic_surrogate"
+	// Ecdaa - Indicates use of elliptic curve based direct anonymous attestation as defined in [FIDOEcdaaAlgorithm]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
+	Ecdaa AuthenticatorAttestationType = "ecdaa"
+	// AttCA - Indicates PrivacyCA attestation as defined in [TCG-CMCProfile-AIKCertEnroll]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
+	AttCA AuthenticatorAttestationType = "attca"
+	AnonCa AuthenticatorAttestationType = "anonca"
+	None AuthenticatorAttestationType = "none"
 )
 
 // UndesiredAuthenticatorStatus is an array of undesirable authenticator statuses
