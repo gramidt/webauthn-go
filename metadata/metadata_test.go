@@ -13,7 +13,7 @@ func TestMetadataLoad(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	}
-	roots, err := ioutil.ReadFile("./globalsign-root-ca.crt")
+	roots, err := ioutil.ReadFile("certificate/globalsign-root-ca.crt")
 	if err != nil {
 		t.Log(err)
 		t.Fail()

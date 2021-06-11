@@ -15,7 +15,7 @@ type MetadataService interface {
 }
 
 
-//go:embed globalsign-root-ca.crt
+//go:embed certificate/globalsign-root-ca.crt
 var fidoMdsRootCA []byte
 
 const fidoMDSURL = "https://mds.fidoalliance.org/"
