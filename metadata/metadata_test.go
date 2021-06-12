@@ -36,12 +36,14 @@ func TestMetadataLoad(t *testing.T) {
 		t.Log("Type Assertion Failed...")
 		t.Fail()
 	}
-	t.Log(metadata)
+	err = metadata.Valid()
+	if err != nil {
+		t.Fail()
+	}
 }
 
 func TestDefaultMetadataService(t *testing.T) {
 	def := NewDefaultMetadataService()
-	def.Fetch()
 	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
 	if statement == nil {
 		t.Fail()

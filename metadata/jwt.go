@@ -28,30 +28,6 @@ func (p *DefaultMetadataParserVerifier) ParseAndVerifyMetadataBlob (tokenString 
 	return parsedToken, nil
 }
 
-//func (p *DefaultMetadataParserVerifier) ParseAndVerifyMetadataStatement (statementBytes []byte, tocEntryHash string, alg string) (*mds.MetadataStatement, error) {
-//	h, err := p.getHashForAlg(alg)
-//	if err != nil {
-//		return nil, err
-//	}
-//	h.Write(statementBytes)
-//
-//	encoded := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
-//
-//	if encoded != tocEntryHash {
-//		err = fmt.Errorf("statement hash does not equal toc entry hash, expected: %s - got: %s", tocEntryHash, encoded)
-//		log.Error().Msg(err.Error())
-//		return nil, err
-//	}
-//
-//	metadataStatementRaw, err := base64.URLEncoding.DecodeString(string(statementBytes))
-//	var metadataStatement mds.MetadataStatement
-//
-//	if err := json.Unmarshal(metadataStatementRaw, &metadataStatement); err != nil {
-//		return nil, err
-//	}
-//	return &metadataStatement, nil
-//}
-
 func (p *DefaultMetadataParserVerifier) getValidationKeyExtractor(rootCerts []*x509.Certificate) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		// Verify signing method (alg)

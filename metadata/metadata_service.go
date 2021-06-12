@@ -5,10 +5,14 @@ import (
 	"crypto/x509"
 	_ "embed"
 	"errors"
+	"github.com/go-co-op/gocron"
 	"github.com/teamhanko/webauthn/metadata/certificate"
 	"log"
 	"net/http"
+	"sync"
+	"time"
 )
+
 type MetadataService interface {
 	WebAuthnAuthenticator(aaguid string) *MetadataStatement
 	U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement
@@ -23,7 +27,9 @@ const fidoMDSURL = "https://mds.fidoalliance.org/"
 type DefaultMetadataService struct {
 	mdsUrl string
 	rootCert x509.Certificate
-	metadata MetadataBLOBPayload
+	Metadata MetadataBLOBPayload
+	mu sync.RWMutex
+	scheduler *gocron.Scheduler
 }
 
 func NewDefaultMetadataService() *DefaultMetadataService {
@@ -37,13 +43,27 @@ func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
 		log.Println(err)
 		return nil
 	}
-	return &DefaultMetadataService{
+	scheduler := gocron.NewScheduler(time.UTC)
+
+	d := &DefaultMetadataService{
 		rootCert: *cert,
 		mdsUrl: mdsURL,
+		scheduler: scheduler,
+		metadata: MetadataBLOBPayload{},
+		mu: sync.RWMutex{},
 	}
+	_, err = scheduler.Every(1).Day().At("00:00").Do(d.Update)
+	if err != nil {log.Println(err)}
+	scheduler.StartAsync()
+	err = d.Update()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return d
 }
 
-func (d *DefaultMetadataService) Fetch() error {
+func (d *DefaultMetadataService) Update() error {
 	client := http.Client{}
 	resp, err := client.Get(d.mdsUrl)
 	if err != nil {
@@ -64,12 +84,24 @@ func (d *DefaultMetadataService) Fetch() error {
 	if !ok {
 		return errors.New("Could not TypeAssert metadata")
 	}
+	log.Printf("Fetched Metadata Nr. %v", metadata.Number)
+	err = metadata.Valid()
+	if err != nil {
+		return err
+	}
+	log.Printf("Metadata valid.")
+	log.Printf("Found: %v entries.", len(metadata.Entries))
+
+	d.mu.Lock()
 	d.metadata = *metadata
-	log.Printf("Fetched Metadata Nr. %v", d.metadata.Number)
-	return d.metadata.Valid()
+	d.mu.Unlock()
+
+	return nil
 }
 
 func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	for _, v := range d.metadata.Entries {
 		if v.AaGUID == aaguid {
 			return &v.MetadataStatement
@@ -79,6 +111,8 @@ func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataS
 }
 
 func (d *DefaultMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	for _, v := range d.metadata.Entries {
 		for _, w := range v.AttestationCertificateKeyIdentifiers {
 			if  w == attestationCertificateKeyIdentifier {
