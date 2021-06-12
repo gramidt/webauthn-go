@@ -49,7 +49,7 @@ func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
 		rootCert: *cert,
 		mdsUrl: mdsURL,
 		scheduler: scheduler,
-		metadata: MetadataBLOBPayload{},
+		Metadata: MetadataBLOBPayload{},
 		mu: sync.RWMutex{},
 	}
 	_, err = scheduler.Every(1).Day().At("00:00").Do(d.Update)
@@ -93,7 +93,7 @@ func (d *DefaultMetadataService) Update() error {
 	log.Printf("Found: %v entries.", len(metadata.Entries))
 
 	d.mu.Lock()
-	d.metadata = *metadata
+	d.Metadata = *metadata
 	d.mu.Unlock()
 
 	return nil
@@ -102,7 +102,7 @@ func (d *DefaultMetadataService) Update() error {
 func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	for _, v := range d.metadata.Entries {
+	for _, v := range d.Metadata.Entries {
 		if v.AaGUID == aaguid {
 			return &v.MetadataStatement
 		}
@@ -113,7 +113,7 @@ func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataS
 func (d *DefaultMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	for _, v := range d.metadata.Entries {
+	for _, v := range d.Metadata.Entries {
 		for _, w := range v.AttestationCertificateKeyIdentifiers {
 			if  w == attestationCertificateKeyIdentifier {
 				return &v.MetadataStatement
