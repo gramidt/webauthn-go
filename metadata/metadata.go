@@ -120,8 +120,18 @@ type MetadataStatement struct {
 	Icon string `json:"icon"`
 	// List of extensions supported by the authenticator.
 	SupportedExtensions []ExtensionDescriptor `json:"supportedExtensions"`
-	//TODO add authenticatorGetInfo
+	// Describes supported versions, extensions, AAGUID of the device and its capabilities.
+	AuthenticatorGetInfo AuthenticatorGetInfo `json:"authenticatorGetInfo"`
+}
 
+type AuthenticatorGetInfo struct {
+	Versions []string `json:"versions"`
+	Extensions []string `json:"extensions"`
+	AaGUID string `json:"aaguid"`
+	Options map[string]bool `json:"options"`
+	MaxMsgSize uint `json:"maxMsgSize"`
+	// TODO: The Spec says PinProtocols. In the Blob stands pinUvAuthProtocols
+	PinProtocols []uint `json:"pinUvAuthProtocols"`
 }
 
 // AuthenticatorStatus - This enumeration describes the status of an authenticator model as identified by its AAID and potentially some additional information (such as a specific attestation key).
