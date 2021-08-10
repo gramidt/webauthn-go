@@ -76,7 +76,7 @@ type MetadataStatement struct {
 	// A list of human-readable short descriptions of the authenticator in different languages.
 	AlternativeDescriptions map[string]string `json:"alternativeDescriptions"`
 	// Earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement.
-	AuthenticatorVersion uint16 `json:"authenticatorVersion"`
+	AuthenticatorVersion uint32 `json:"authenticatorVersion"`
 	// The FIDO protocol family. The values "uaf", "u2f", and "fido2" are supported.
 	ProtocolFamily string `json:"protocolFamily"`
 	// The FIDO unified protocol version(s) (related to the specific protocol family) supported by this authenticator.
