@@ -8,7 +8,7 @@ import (
 )
 
 func TestMetadataLoad(t *testing.T) {
-	bytes, err := ioutil.ReadFile("./blob.jwt")
+	bytes, err := ioutil.ReadFile("./blob-6.jwt")
 	if err != nil {
 		t.Log(err)
 		t.Fail()
