@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"github.com/teamhanko/webauthn/metadata/certificate"
 	"io/ioutil"
+	"log"
 	"testing"
 )
 
@@ -44,6 +45,7 @@ func TestMetadataLoad(t *testing.T) {
 
 func TestDefaultMetadataService(t *testing.T) {
 	def := NewDefaultMetadataService()
+	log.Println(def.Metadata.Entries)
 	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
 	if statement == nil {
 		t.Fail()

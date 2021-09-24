@@ -27,7 +27,7 @@ const fidoMDSURL = "https://mds.fidoalliance.org/"
 type DefaultMetadataService struct {
 	mdsUrl string
 	rootCert x509.Certificate
-	Metadata MetadataBLOBPayload
+	Metadata *MetadataBLOBPayload
 	mu sync.RWMutex
 	scheduler *gocron.Scheduler
 }
@@ -49,7 +49,7 @@ func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
 		rootCert: *cert,
 		mdsUrl: mdsURL,
 		scheduler: scheduler,
-		Metadata: MetadataBLOBPayload{},
+		Metadata: &MetadataBLOBPayload{},
 		mu: sync.RWMutex{},
 	}
 	_, err = scheduler.Every(1).Day().At("00:00").Do(d.Update)
@@ -93,7 +93,7 @@ func (d *DefaultMetadataService) Update() error {
 	log.Printf("Found: %v entries.", len(metadata.Entries))
 
 	d.mu.Lock()
-	d.Metadata = *metadata
+	d.Metadata = metadata
 	d.mu.Unlock()
 
 	return nil
