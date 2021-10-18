@@ -44,7 +44,7 @@ func TestMetadataLoad(t *testing.T) {
 }
 
 func TestDefaultMetadataService(t *testing.T) {
-	def := NewDefaultMetadataService()
+	def := NewInMemoryMetadataService()
 	log.Println(def.Metadata.Entries)
 	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
 	if statement == nil {

@@ -24,7 +24,7 @@ var fidoMdsRootCA []byte
 
 const fidoMDSURL = "https://mds.fidoalliance.org/"
 
-type DefaultMetadataService struct {
+type InMemoryMetadataService struct {
 	mdsUrl string
 	rootCert x509.Certificate
 	Metadata *MetadataBLOBPayload
@@ -32,11 +32,11 @@ type DefaultMetadataService struct {
 	scheduler *gocron.Scheduler
 }
 
-func NewDefaultMetadataService() *DefaultMetadataService {
-	return NewDefaultMetadataServiceWithUrl(fidoMDSURL)
+func NewInMemoryMetadataService() *InMemoryMetadataService {
+	return NewInMemoryMetadataServiceWithUrl(fidoMDSURL)
 }
 
-func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
+func NewInMemoryMetadataServiceWithUrl(mdsURL string) *InMemoryMetadataService {
 	certParser := certificate.PemCertificateParser{}
 	cert, err := certParser.Parse(fidoMdsRootCA)
 	if err != nil {
@@ -45,7 +45,7 @@ func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
 	}
 	scheduler := gocron.NewScheduler(time.UTC)
 
-	d := &DefaultMetadataService{
+	d := &InMemoryMetadataService{
 		rootCert: *cert,
 		mdsUrl: mdsURL,
 		scheduler: scheduler,
@@ -63,7 +63,7 @@ func NewDefaultMetadataServiceWithUrl(mdsURL string) *DefaultMetadataService {
 	return d
 }
 
-func (d *DefaultMetadataService) Update() error {
+func (d *InMemoryMetadataService) Update() error {
 	client := http.Client{}
 	resp, err := client.Get(d.mdsUrl)
 	if err != nil {
@@ -99,7 +99,7 @@ func (d *DefaultMetadataService) Update() error {
 	return nil
 }
 
-func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
+func (d *InMemoryMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	for _, v := range d.Metadata.Entries {
@@ -110,7 +110,7 @@ func (d *DefaultMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataS
 	return nil
 }
 
-func (d *DefaultMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
+func (d *InMemoryMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	for _, v := range d.Metadata.Entries {
