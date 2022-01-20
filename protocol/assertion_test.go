@@ -152,7 +152,7 @@ func TestParsedCredentialAssertionData_Verify(t *testing.T) {
 	type args struct {
 		storedChallenge    Challenge
 		relyingPartyID     string
-		relyingPartyOrigin string
+		relyingPartyOrigin []string
 		verifyUser         bool
 		credentialBytes    []byte
 	}

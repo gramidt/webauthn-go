@@ -5,9 +5,9 @@ import (
 	"github.com/teamhanko/webauthn/cbor_options"
 	"github.com/teamhanko/webauthn/credential"
 	"github.com/teamhanko/webauthn/metadata"
-	"net/url"
-
 	"github.com/teamhanko/webauthn/protocol"
+	"log"
+	"net/url"
 )
 
 var defaultTimeout = 60000
@@ -30,6 +30,7 @@ type Config struct {
 	RPDisplayName string
 	RPID          string
 	RPOrigin      string
+	RPOrigins     []string
 	RPIcon        string
 	// Defaults for generating options
 	AttestationPreference  protocol.ConveyancePreference
@@ -62,14 +63,28 @@ func (config *Config) validate() error {
 		config.Timeouts.Registration = defaultTimeout
 	}
 
-	if config.RPOrigin == "" {
-		config.RPOrigin = config.RPID
-	} else {
-		u, err := url.Parse(config.RPOrigin)
+	if config.RPOrigin != "" {
+		config.RPOrigins = append(config.RPOrigins, config.RPOrigin)
+	}
+
+	var validOrigins []string
+	for _, origin := range config.RPOrigins {
+		u, err := url.Parse(origin)
 		if err != nil {
-			return fmt.Errorf("RPOrigin not valid URL: %+v", err)
+			log.Println(fmt.Sprintf("Failed to parse Origin: %s, skip it", origin))
+			continue
 		}
-		config.RPOrigin = protocol.FullyQualifiedOrigin(u)
+		if u.Scheme != "https" && u.Scheme != "http" {
+			// we need this case for android (origin is then something like: 'android:apk-key-hash:...')
+			validOrigins = append(validOrigins, origin)
+		} else {
+			validOrigins = append(validOrigins, protocol.FullyQualifiedOrigin(u))
+		}
+	}
+	config.RPOrigins = validOrigins
+
+	if len(config.RPOrigins) == 0 {
+		return fmt.Errorf("no valid origins found")
 	}
 
 	return nil

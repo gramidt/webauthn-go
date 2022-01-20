@@ -167,7 +167,7 @@ func TestParsedCredentialCreationData_Verify(t *testing.T) {
 		storedChallenge    Challenge
 		verifyUser         bool
 		relyingPartyID     string
-		relyingPartyOrigin string
+		relyingPartyOrigin []string
 		credentialStore    credential.CredentialService
 	}
 	tests := []struct {
@@ -227,7 +227,7 @@ func TestParsedCredentialCreationData_Verify(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         false,
 				relyingPartyID:     `webauthn.io`,
-				relyingPartyOrigin: `https://webauthn.io`,
+				relyingPartyOrigin: []string{`https://webauthn.io`},
 				credentialStore:    nil,
 			},
 			wantErr: false,
@@ -283,7 +283,7 @@ func TestParsedCredentialCreationData_Verify(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         false,
 				relyingPartyID:     `webauthn.io`,
-				relyingPartyOrigin: `https://webauthn.io`,
+				relyingPartyOrigin: []string{`https://webauthn.io`},
 				credentialStore:    &testCredentialStore{},
 			},
 			wantErr: true,
@@ -339,7 +339,7 @@ func TestParsedCredentialCreationData_Verify(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         false,
 				relyingPartyID:     `webauthn.io`,
-				relyingPartyOrigin: `https://webauthn.io`,
+				relyingPartyOrigin: []string{`https://webauthn.io`},
 				credentialStore:    &testCredentialStore{},
 			},
 			wantErr: false,
@@ -397,7 +397,7 @@ func TestParsedCredentialCreationData_Verify_With_Metadata(t *testing.T) {
 		storedChallenge    Challenge
 		verifyUser         bool
 		relyingPartyID     string
-		relyingPartyOrigin string
+		relyingPartyOrigin []string
 		metadataService    metadata.MetadataService
 	}
 	tests := []struct {
@@ -458,7 +458,7 @@ func TestParsedCredentialCreationData_Verify_With_Metadata(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         true,
 				relyingPartyID:     "webauthn.io",
-				relyingPartyOrigin: "https://webauthn.io",
+				relyingPartyOrigin: []string{"https://webauthn.io"},
 				metadataService:    defaultMetadataService,
 			},
 		},
@@ -514,7 +514,7 @@ func TestParsedCredentialCreationData_Verify_With_Metadata(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         true,
 				relyingPartyID:     "webauthn.io",
-				relyingPartyOrigin: "https://webauthn.io",
+				relyingPartyOrigin: []string{"https://webauthn.io"},
 				metadataService:    defaultMetadataService,
 			},
 			wantErr: true,
@@ -571,7 +571,7 @@ func TestParsedCredentialCreationData_Verify_With_Metadata(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         true,
 				relyingPartyID:     "webauthn.io",
-				relyingPartyOrigin: "https://webauthn.io",
+				relyingPartyOrigin: []string{"https://webauthn.io"},
 				metadataService:    defaultMetadataService,
 			},
 			wantErr: true,
@@ -628,7 +628,7 @@ func TestParsedCredentialCreationData_Verify_With_Metadata(t *testing.T) {
 				storedChallenge:    byteChallenge,
 				verifyUser:         true,
 				relyingPartyID:     "webauthn.io",
-				relyingPartyOrigin: "https://webauthn.io",
+				relyingPartyOrigin: []string{"https://webauthn.io"},
 				metadataService:    defaultMetadataService,
 			},
 			wantErr: true,

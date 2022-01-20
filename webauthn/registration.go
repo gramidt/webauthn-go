@@ -124,7 +124,7 @@ func (webauthn *WebAuthn) FinishRegistration(session SessionData, response *http
 func (webauthn *WebAuthn) CreateCredential(session SessionData, parsedResponse *protocol.ParsedCredentialCreationData) (*credential.Credential, error) {
 	shouldVerifyUser := session.UserVerification == protocol.VerificationRequired
 
-	invalidErr := parsedResponse.Verify(session.Challenge, shouldVerifyUser, webauthn.Config.RPID, webauthn.Config.RPOrigin, webauthn.MetadataService, webauthn.CredentialService, webauthn.RpPolicy)
+	invalidErr := parsedResponse.Verify(session.Challenge, shouldVerifyUser, webauthn.Config.RPID, webauthn.Config.RPOrigins, webauthn.MetadataService, webauthn.CredentialService, webauthn.RpPolicy)
 	if invalidErr != nil {
 		return nil, invalidErr
 	}

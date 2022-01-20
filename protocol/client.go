@@ -59,7 +59,7 @@ func FullyQualifiedOrigin(u *url.URL) string {
 // new credential and steps 7 through 10 of verifying an authentication assertion
 // See https://www.w3.org/TR/webauthn-1/#registering-a-new-credential
 // and https://www.w3.org/TR/webauthn-1/#verifying-assertion
-func (c *CollectedClientData) Verify(storedChallenge string, ceremony CeremonyType, relyingPartyOrigin string) error {
+func (c *CollectedClientData) Verify(storedChallenge string, ceremony CeremonyType, relyingPartyOrigins []string) error {
 
 	// Registration Step 3. Verify that the value of C.type is webauthn.create.
 
@@ -105,9 +105,17 @@ func (c *CollectedClientData) Verify(storedChallenge string, ceremony CeremonyTy
 		return ErrParsingData.WithDetails("Error decoding clientData origin as URL")
 	}
 
-	if !strings.EqualFold(FullyQualifiedOrigin(clientDataOrigin), relyingPartyOrigin) {
+	foundOriginMatch := false
+	fullyQualifiedClientDataOrigin := FullyQualifiedOrigin(clientDataOrigin)
+	for _, origin := range relyingPartyOrigins {
+		if strings.EqualFold(fullyQualifiedClientDataOrigin, origin) {
+			foundOriginMatch = true
+		}
+	}
+
+	if !foundOriginMatch {
 		err := ErrVerification.WithDetails("Error validating origin")
-		return err.WithInfo(fmt.Sprintf("Expected Value: %s\n Received: %s\n", relyingPartyOrigin, FullyQualifiedOrigin(clientDataOrigin)))
+		return err.WithInfo(fmt.Sprintf("Expected Value list: %q\n Received: %s\n", relyingPartyOrigins, FullyQualifiedOrigin(clientDataOrigin)))
 	}
 
 	// Registration Step 6 and Assertion Step 10. Verify that the value of C.tokenBinding.status
