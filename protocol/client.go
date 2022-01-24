@@ -106,7 +106,10 @@ func (c *CollectedClientData) Verify(storedChallenge string, ceremony CeremonyTy
 	}
 
 	foundOriginMatch := false
-	fullyQualifiedClientDataOrigin := FullyQualifiedOrigin(clientDataOrigin)
+	fullyQualifiedClientDataOrigin := c.Origin
+	if clientDataOrigin.Scheme == "https" || clientDataOrigin.Scheme == "http" {
+		fullyQualifiedClientDataOrigin = FullyQualifiedOrigin(clientDataOrigin)
+	}
 	for _, origin := range relyingPartyOrigins {
 		if strings.EqualFold(fullyQualifiedClientDataOrigin, origin) {
 			foundOriginMatch = true
