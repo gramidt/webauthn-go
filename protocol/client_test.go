@@ -9,7 +9,7 @@ import (
 func setupCollectedClientData(challenge []byte) *CollectedClientData {
 	ccd := &CollectedClientData{
 		Type:   CreateCeremony,
-		Origin: "example.com",
+		Origin: "https://example.com",
 	}
 
 	ccd.Challenge = base64.RawURLEncoding.EncodeToString(challenge)
