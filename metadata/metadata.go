@@ -12,7 +12,7 @@ import (
 
 	"github.com/cloudflare/cfssl/revoke"
 	"github.com/mitchellh/mapstructure"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )

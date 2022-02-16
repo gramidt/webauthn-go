@@ -3,7 +3,7 @@ package protocol
 import (
 	"bytes"
 	"encoding/base64"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 	"github.com/teamhanko/webauthn/cbor_options"
 	"github.com/teamhanko/webauthn/credential"
 	"github.com/teamhanko/webauthn/metadata"
