@@ -66,7 +66,7 @@ func (webauthn *WebAuthn) BeginLogin(user User, opts ...LoginOption) (*protocol.
 		Challenge:            base64.RawURLEncoding.EncodeToString(requestOptions.Challenge),
 		AllowedCredentialIDs: requestOptions.GetAllowedCredentialIDs(),
 		UserVerification:     requestOptions.UserVerification,
-		Timeout: requestOptions.Timeout,
+		Timeout:              requestOptions.Timeout,
 	}
 
 	response := protocol.CredentialAssertion{Response: requestOptions}
@@ -112,7 +112,6 @@ func WithLoginTimeout(timeout int) LoginOption {
 		cco.Timeout = timeout
 	}
 }
-
 
 // FinishLogin takes the response from the client and validates it against the user credentials and stored session data
 func (webauthn *WebAuthn) FinishLogin(session SessionData, response *http.Request) (credential *credential.Credential, userId []byte, error error) {
