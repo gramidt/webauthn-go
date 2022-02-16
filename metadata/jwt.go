@@ -13,14 +13,14 @@ import (
 )
 
 type MetadataParserVerifier interface {
-	ParseAndVerifyMetadataBlob (tokenString string, roots []*x509.Certificate) (*jwt.Token, error)
+	ParseAndVerifyMetadataBlob(tokenString string, roots []*x509.Certificate) (*jwt.Token, error)
 }
 
 type DefaultMetadataParserVerifier struct {
 	CertificateChainVerifier *certificate.ChainVerifier
 }
 
-func (p *DefaultMetadataParserVerifier) ParseAndVerifyMetadataBlob (tokenString string, roots []*x509.Certificate) (*jwt.Token, error) {
+func (p *DefaultMetadataParserVerifier) ParseAndVerifyMetadataBlob(tokenString string, roots []*x509.Certificate) (*jwt.Token, error) {
 	parsedToken, err := jwt.ParseWithClaims(tokenString, &MetadataBLOBPayload{}, p.getValidationKeyExtractor(roots))
 	if err != nil {
 		return nil, err

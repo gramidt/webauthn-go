@@ -4,7 +4,6 @@ import (
 	"crypto/x509"
 	"github.com/teamhanko/webauthn/metadata/certificate"
 	"io/ioutil"
-	"log"
 	"testing"
 )
 
@@ -43,9 +42,37 @@ func TestMetadataLoad(t *testing.T) {
 	}
 }
 
-func TestDefaultMetadataService(t *testing.T) {
-	def := NewInMemoryMetadataService()
-	log.Println(def.Metadata.Entries)
+func TestNewInMemoryMetadataServiceBlob6(t *testing.T) {
+	bytes, err := ioutil.ReadFile("./blob-6.jwt")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	_, err = NewInMemoryMetadataService(bytes)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+}
+
+func TestNewInMemoryMetadataServiceBlob12(t *testing.T) {
+	bytes, err := ioutil.ReadFile("./blob-12.jwt")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	_, err = NewInMemoryMetadataService(bytes)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+}
+
+func TestSelfUpdatingMetadataService(t *testing.T) {
+	def, err := NewSelfUpdatingMetaDataService()
+	if err != nil {
+		t.Fail()
+	}
 	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
 	if statement == nil {
 		t.Fail()

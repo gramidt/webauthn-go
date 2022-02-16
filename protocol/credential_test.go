@@ -762,7 +762,7 @@ var metadataStatement = &metadata.MetadataStatement{
 	PublicKeyAlgAndEncodings:             []string{"cose"},
 	AttestationTypes:                     []string{"basic_full"},
 	UserVerificationDetails:              nil,
-	KeyProtection:                        []string{"software","tee"},
+	KeyProtection:                        []string{"software", "tee"},
 	IsKeyRestricted:                      false,
 	IsFreshUserVerificationRequired:      false,
 	MatcherProtection:                    []string{"on_chip"},

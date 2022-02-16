@@ -309,7 +309,7 @@ var testMetadataStatement = &metadata.MetadataStatement{
 	PublicKeyAlgAndEncodings:             []string{"ALG_KEY_COSE"},
 	AttestationTypes:                     []string{"basic_full"},
 	UserVerificationDetails:              nil,
-	KeyProtection:                        []string{"software","tee"},
+	KeyProtection:                        []string{"software", "tee"},
 	IsKeyRestricted:                      false,
 	IsFreshUserVerificationRequired:      false,
 	MatcherProtection:                    []string{"on_chip"},

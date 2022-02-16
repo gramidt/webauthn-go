@@ -11,7 +11,6 @@ var Metadata = make(map[uuid.UUID]MetadataBLOBPayloadEntry)
 // Conformance indicates if test metadata is currently being used
 var Conformance = false
 
-
 type MetadataBLOBPayload struct {
 	//The legalHeader, which MUST be in each BLOB, is an indication of the acceptance of the relevant legal agreement for using the MDS. The FIDO Alliance’s Blob will contain this legal header: "legalHeader": "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
 	LegalHeader string `json:"legalHeader"`
@@ -125,11 +124,11 @@ type MetadataStatement struct {
 }
 
 type AuthenticatorGetInfo struct {
-	Versions []string `json:"versions"`
-	Extensions []string `json:"extensions"`
-	AaGUID string `json:"aaguid"`
-	Options map[string]bool `json:"options"`
-	MaxMsgSize uint `json:"maxMsgSize"`
+	Versions   []string        `json:"versions"`
+	Extensions []string        `json:"extensions"`
+	AaGUID     string          `json:"aaguid"`
+	Options    map[string]bool `json:"options"`
+	MaxMsgSize uint            `json:"maxMsgSize"`
 	// TODO: The Spec says PinProtocols. In the Blob stands pinUvAuthProtocols
 	PinProtocols []uint `json:"pinUvAuthProtocols"`
 }
@@ -171,6 +170,7 @@ const (
 )
 
 type AuthenticatorAttestationType string
+
 //Attestation Types
 const (
 	// BasicFull - Indicates full basic attestation, based on an attestation private key shared among a class of authenticators (e.g. same model). Authenticators must provide its attestation signature during the registration process for the same reason. The attestation trust anchor is shared with FIDO Servers out of band (as part of the Metadata). This sharing process should be done according to [UAFMetadataService].
@@ -180,9 +180,9 @@ const (
 	// Ecdaa - Indicates use of elliptic curve based direct anonymous attestation as defined in [FIDOEcdaaAlgorithm]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
 	Ecdaa AuthenticatorAttestationType = "ecdaa"
 	// AttCA - Indicates PrivacyCA attestation as defined in [TCG-CMCProfile-AIKCertEnroll]. Support for this attestation type is optional at this time. It might be required by FIDO Certification.
-	AttCA AuthenticatorAttestationType = "attca"
+	AttCA  AuthenticatorAttestationType = "attca"
 	AnonCa AuthenticatorAttestationType = "anonca"
-	None AuthenticatorAttestationType = "none"
+	None   AuthenticatorAttestationType = "none"
 )
 
 // UndesiredAuthenticatorStatus is an array of undesirable authenticator statuses

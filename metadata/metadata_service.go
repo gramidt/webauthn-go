@@ -1,16 +1,10 @@
 package metadata
 
 import (
-	"bytes"
 	"crypto/x509"
 	_ "embed"
 	"errors"
-	"github.com/go-co-op/gocron"
 	"github.com/teamhanko/webauthn/metadata/certificate"
-	"log"
-	"net/http"
-	"sync"
-	"time"
 )
 
 type MetadataService interface {
@@ -18,90 +12,43 @@ type MetadataService interface {
 	U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement
 }
 
-
 //go:embed certificate/globalsign-root-ca.crt
 var fidoMdsRootCA []byte
 
-const fidoMDSURL = "https://mds.fidoalliance.org/"
-
 type InMemoryMetadataService struct {
-	mdsUrl string
-	rootCert x509.Certificate
 	Metadata *MetadataBLOBPayload
-	mu sync.RWMutex
-	scheduler *gocron.Scheduler
 }
 
-func NewInMemoryMetadataService() *InMemoryMetadataService {
-	return NewInMemoryMetadataServiceWithUrl(fidoMDSURL)
-}
-
-func NewInMemoryMetadataServiceWithUrl(mdsURL string) *InMemoryMetadataService {
+// Parses and validates a JWT given in bytes and constructs a new in-memory MDS
+func NewInMemoryMetadataService(jwtBytes []byte) (*InMemoryMetadataService, error) {
+	// Parse FIDO MDS Certificate
 	certParser := certificate.PemCertificateParser{}
-	cert, err := certParser.Parse(fidoMdsRootCA)
+	rootCa, err := certParser.Parse(fidoMdsRootCA)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return nil, err
 	}
-	scheduler := gocron.NewScheduler(time.UTC)
-
-	d := &InMemoryMetadataService{
-		rootCert: *cert,
-		mdsUrl: mdsURL,
-		scheduler: scheduler,
-		Metadata: &MetadataBLOBPayload{},
-		mu: sync.RWMutex{},
-	}
-	_, err = scheduler.Every(1).Day().At("00:00").Do(d.Update)
-	if err != nil {log.Println(err)}
-	scheduler.StartAsync()
-	err = d.Update()
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	return d
-}
-
-func (d *InMemoryMetadataService) Update() error {
-	client := http.Client{}
-	resp, err := client.Get(d.mdsUrl)
-	if err != nil {
-		return err
-	}
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return err
-	}
-
 	parser := &DefaultMetadataParserVerifier{}
-	jwt, err := parser.ParseAndVerifyMetadataBlob(buf.String(), []*x509.Certificate{&d.rootCert})
+	jwt, err := parser.ParseAndVerifyMetadataBlob(string(jwtBytes), []*x509.Certificate{rootCa})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	metadata, ok := jwt.Claims.(*MetadataBLOBPayload)
 	if !ok {
-		return errors.New("Could not TypeAssert metadata")
+		return nil, errors.New("Could not TypeAssert metadata")
 	}
-	log.Printf("Fetched Metadata Nr. %v", metadata.Number)
 	err = metadata.Valid()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	log.Printf("Metadata valid.")
-	log.Printf("Found: %v entries.", len(metadata.Entries))
 
-	d.mu.Lock()
-	d.Metadata = metadata
-	d.mu.Unlock()
+	mds := &InMemoryMetadataService{
+		Metadata: metadata,
+	}
 
-	return nil
+	return mds, nil
 }
 
 func (d *InMemoryMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
 	for _, v := range d.Metadata.Entries {
 		if v.AaGUID == aaguid {
 			return &v.MetadataStatement
@@ -111,14 +58,20 @@ func (d *InMemoryMetadataService) WebAuthnAuthenticator(aaguid string) *Metadata
 }
 
 func (d *InMemoryMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
 	for _, v := range d.Metadata.Entries {
 		for _, w := range v.AttestationCertificateKeyIdentifiers {
-			if  w == attestationCertificateKeyIdentifier {
+			if w == attestationCertificateKeyIdentifier {
 				return &v.MetadataStatement
 			}
 		}
 	}
 	return nil
+}
+
+func (d *InMemoryMetadataService) GetNextUpdateDate() string {
+	return d.Metadata.NextUpdate
+}
+
+func (d * InMemoryMetadataService) GetMetadataNumber() int {
+	return d.Metadata.Number
 }

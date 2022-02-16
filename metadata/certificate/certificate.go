@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-type ChainVerifier struct {}
+type ChainVerifier struct{}
 
 func (v *ChainVerifier) Verify(chain []*x509.Certificate, rootCertificates []*x509.Certificate) error {
 	roots := x509.NewCertPool()
@@ -28,7 +28,7 @@ func (v *ChainVerifier) Verify(chain []*x509.Certificate, rootCertificates []*x5
 	}
 
 	opts := x509.VerifyOptions{
-		Roots:   roots,
+		Roots:         roots,
 		Intermediates: intermediates,
 	}
 
@@ -40,7 +40,7 @@ func (v *ChainVerifier) Verify(chain []*x509.Certificate, rootCertificates []*x5
 	return nil
 }
 
-type RevocationVerifier struct {}
+type RevocationVerifier struct{}
 
 func (v *RevocationVerifier) Verify(certificate *x509.Certificate) bool {
 
@@ -97,7 +97,7 @@ func (v *RevocationVerifier) IsRevoked(certificate *x509.Certificate, crl *pkix.
 	return false
 }
 
-type PemCertificateParser struct {}
+type PemCertificateParser struct{}
 
 func (p *PemCertificateParser) Parse(certBytes []byte) (*x509.Certificate, error) {
 	pemBlock, _ := pem.Decode(certBytes)
