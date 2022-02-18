@@ -14,7 +14,7 @@ var Conformance = false
 type MetadataBLOBPayload struct {
 	//The legalHeader, which MUST be in each BLOB, is an indication of the acceptance of the relevant legal agreement for using the MDS. The FIDO Alliance’s Blob will contain this legal header: "legalHeader": "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
 	LegalHeader string `json:"legalHeader"`
-	//The serial number of this UAF Metadata BLOB Payload. Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a no value exactly incremented by one.
+	//The serial number of this Metadata BLOB Payload. Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a "no" value exactly incremented by one.
 	Number int `json:"no"`
 	// ISO-8601 formatted date when the next update will be provided at latest.
 	NextUpdate string `json:"nextUpdate"`
