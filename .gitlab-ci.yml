@@ -4,7 +4,7 @@ stages:
 
 test/go-test:
   stage: test
-  image: golang:1.15-alpine
+  image: golang:1.16-alpine
   variables:
     CGO_ENABLED: 0
   script:
@@ -17,7 +17,7 @@ test/go-test:
 ## Use https://github.com/jstemmer/go-junit-report to generate a JUnit report format XML file with go
 golang:
   stage: test
-  image: golang:1.15-alpine
+  image: golang:1.16-alpine
   variables:
     CGO_ENABLED: 0
   script:
