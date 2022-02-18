@@ -4,8 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -46,11 +46,13 @@ func (v *RevocationVerifier) Verify(certificate *x509.Certificate) bool {
 
 	crls, err := v.getCrls(certificate)
 	if err != nil {
+		log.Println(err)
 		return false
 	}
 
 	for _, crl := range crls {
 		if v.IsRevoked(certificate, crl) {
+			log.Println("Certificate got revoked.")
 			return false
 		}
 	}
@@ -68,7 +70,7 @@ func (v *RevocationVerifier) getCrls(certificate *x509.Certificate) ([]*pkix.Cer
 		resp, err := client.Get(point)
 
 		if err != nil {
-			log.Printf("could not fetch CRL for distribution point %s", point)
+			errors.Wrap(err, fmt.Sprintf("could not fetch CRL for distribution point %s", point))
 			return nil, err
 		}
 
@@ -77,7 +79,7 @@ func (v *RevocationVerifier) getCrls(certificate *x509.Certificate) ([]*pkix.Cer
 
 		crl, err := x509.ParseCRL(crlBytes)
 		if err != nil {
-			log.Printf("could not parse CRL: %s", err)
+			errors.Wrap(err, fmt.Sprintf("could not parse CRL: %s", err))
 			return nil, err
 		} else {
 			crls = append(crls, crl)

@@ -13,7 +13,7 @@ type MetadataService interface {
 }
 
 //go:embed certificate/globalsign-root-ca.crt
-var fidoMdsRootCA []byte
+var FidoMdsRootCA []byte
 
 type InMemoryMetadataService struct {
 	Metadata *MetadataBLOBPayload
@@ -23,7 +23,7 @@ type InMemoryMetadataService struct {
 func NewInMemoryMetadataService(jwtBytes []byte) (*InMemoryMetadataService, error) {
 	// Parse FIDO MDS Certificate
 	certParser := certificate.PemCertificateParser{}
-	rootCa, err := certParser.Parse(fidoMdsRootCA)
+	rootCa, err := certParser.Parse(FidoMdsRootCA)
 	if err != nil {
 		return nil, err
 	}

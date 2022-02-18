@@ -18,7 +18,7 @@ type MetadataBLOBPayload struct {
 	Number int `json:"no"`
 	// ISO-8601 formatted date when the next update will be provided at latest.
 	NextUpdate string `json:"nextUpdate"`
-	// List of zero or more MetadataBLOBPayloadEntry objects.
+	// List of MetadataBLOBPayloadEntry objects.
 	Entries []MetadataBLOBPayloadEntry `json:"entries"`
 }
 
@@ -129,7 +129,7 @@ type AuthenticatorGetInfo struct {
 	AaGUID     string          `json:"aaguid"`
 	Options    map[string]bool `json:"options"`
 	MaxMsgSize uint            `json:"maxMsgSize"`
-	// TODO: The Spec says PinProtocols. In the Blob stands pinUvAuthProtocols
+	// Ambiguous: The Spec says PinProtocols. In the Blob stands pinUvAuthProtocols
 	PinProtocols []uint `json:"pinUvAuthProtocols"`
 }
 

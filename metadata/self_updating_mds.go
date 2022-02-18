@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const fidoMDSURL = "https://mds.fidoalliance.org/"
+const FidoMDSURL = "https://mds.fidoalliance.org/"
 
 // The SelfUpdatingMetaDataService fetches Metadata from the web given an url and starts a scheduler to self update
 type SelfUpdatingMetaDataService struct {
@@ -20,7 +20,7 @@ type SelfUpdatingMetaDataService struct {
 
 // Construct a MDS with the official Fido Alliance MDS Server as Input
 func NewSelfUpdatingMetaDataService() (*SelfUpdatingMetaDataService, error) {
-	return NewSelfUpdatingMetaDataServiveWithCustomUrl(fidoMDSURL)
+	return NewSelfUpdatingMetaDataServiveWithCustomUrl(FidoMDSURL)
 }
 
 func NewSelfUpdatingMetaDataServiveWithCustomUrl(authorityUrl string) (*SelfUpdatingMetaDataService, error){
