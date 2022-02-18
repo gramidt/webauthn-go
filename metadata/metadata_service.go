@@ -72,6 +72,6 @@ func (d *InMemoryMetadataService) GetNextUpdateDate() string {
 	return d.Metadata.NextUpdate
 }
 
-func (d * InMemoryMetadataService) GetMetadataNumber() int {
+func (d *InMemoryMetadataService) GetMetadataNumber() int {
 	return d.Metadata.Number
 }

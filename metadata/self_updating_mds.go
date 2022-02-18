@@ -15,7 +15,7 @@ type SelfUpdatingMetaDataService struct {
 	mdsUrl    string
 	mds       *InMemoryMetadataService
 	scheduler *gocron.Scheduler
-	mu sync.RWMutex
+	mu        sync.RWMutex
 }
 
 // Construct a MDS with the official Fido Alliance MDS Server as Input
@@ -23,13 +23,13 @@ func NewSelfUpdatingMetaDataService() (*SelfUpdatingMetaDataService, error) {
 	return NewSelfUpdatingMetaDataServiveWithCustomUrl(FidoMDSURL)
 }
 
-func NewSelfUpdatingMetaDataServiveWithCustomUrl(authorityUrl string) (*SelfUpdatingMetaDataService, error){
+func NewSelfUpdatingMetaDataServiveWithCustomUrl(authorityUrl string) (*SelfUpdatingMetaDataService, error) {
 	scheduler := gocron.NewScheduler(time.UTC)
 
 	mds := &SelfUpdatingMetaDataService{
 		mdsUrl:    authorityUrl,
 		scheduler: scheduler,
-		mu:  sync.RWMutex{},
+		mu:        sync.RWMutex{},
 	}
 	err := mds.Update()
 	if err != nil {
