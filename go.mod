@@ -1,4 +1,4 @@
-module github.com/teamhanko/webauthn
+module github.com/teamhanko/webauthn-go
 
 go 1.17
 
