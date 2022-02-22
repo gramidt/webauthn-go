@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/teamhanko/webauthn/metadata/certificate"
+	"github.com/teamhanko/webauthn-go/metadata/certificate"
 	"hash"
 )
 

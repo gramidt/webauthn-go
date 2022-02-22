@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"bytes"
-	"github.com/teamhanko/webauthn/protocol"
+	"github.com/teamhanko/webauthn-go/protocol"
 )
 
 func TestRegistration_FinishRegistrationFailure(t *testing.T) {

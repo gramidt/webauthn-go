@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"crypto/x509"
-	"github.com/teamhanko/webauthn/metadata/certificate"
+	"github.com/teamhanko/webauthn-go/metadata/certificate"
 	"io/ioutil"
 	"testing"
 )

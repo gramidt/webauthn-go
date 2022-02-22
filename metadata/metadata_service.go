@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	_ "embed"
 	"errors"
-	"github.com/teamhanko/webauthn/metadata/certificate"
+	"github.com/teamhanko/webauthn-go/metadata/certificate"
 )
 
 type MetadataService interface {

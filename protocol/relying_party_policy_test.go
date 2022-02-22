@@ -2,7 +2,7 @@ package protocol
 
 import (
 	uuid "github.com/gofrs/uuid"
-	"github.com/teamhanko/webauthn/metadata"
+	"github.com/teamhanko/webauthn-go/metadata"
 	"testing"
 )
 

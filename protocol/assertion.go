@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/teamhanko/webauthn/protocol/webauthncose"
+	"github.com/teamhanko/webauthn-go/protocol/webauthncose"
 )
 
 // CredentialAssertionResponse represents the raw response returned to us from an authenticator when we request a

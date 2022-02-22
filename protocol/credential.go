@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"github.com/cloudflare/cfssl/scan/crypto/sha1"
 	uuid "github.com/gofrs/uuid"
-	"github.com/teamhanko/webauthn/credential"
-	"github.com/teamhanko/webauthn/metadata"
+	"github.com/teamhanko/webauthn-go/credential"
+	"github.com/teamhanko/webauthn-go/metadata"
 	"io"
 	"net/http"
 )

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	uuid "github.com/gofrs/uuid"
-	"github.com/teamhanko/webauthn/metadata"
+	"github.com/teamhanko/webauthn-go/metadata"
 
-	"github.com/teamhanko/webauthn/protocol/webauthncose"
+	"github.com/teamhanko/webauthn-go/protocol/webauthncose"
 )
 
 var packedAttestationKey = "packed"

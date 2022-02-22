@@ -2,10 +2,10 @@ package webauthn
 
 import (
 	"fmt"
-	"github.com/teamhanko/webauthn/cbor_options"
-	"github.com/teamhanko/webauthn/credential"
-	"github.com/teamhanko/webauthn/metadata"
-	"github.com/teamhanko/webauthn/protocol"
+	"github.com/teamhanko/webauthn-go/cbor_options"
+	"github.com/teamhanko/webauthn-go/credential"
+	"github.com/teamhanko/webauthn-go/metadata"
+	"github.com/teamhanko/webauthn-go/protocol"
 	"log"
 	"net/url"
 )

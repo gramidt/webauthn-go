@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/teamhanko/webauthn/cbor_options"
-	"github.com/teamhanko/webauthn/protocol/webauthncose"
+	"github.com/teamhanko/webauthn-go/cbor_options"
+	"github.com/teamhanko/webauthn-go/protocol/webauthncose"
 )
 
 // From §5.2.1 (https://www.w3.org/TR/webauthn-1/#authenticatorattestationresponse)
