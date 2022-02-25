@@ -6,7 +6,7 @@ require (
 	github.com/biter777/countries v1.3.4
 	github.com/cloudflare/cfssl v1.6.1
 	github.com/fxamacker/cbor/v2 v2.4.0
-	github.com/go-co-op/gocron v1.12.0
+	github.com/go-co-op/gocron v1.13.0
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/mitchellh/mapstructure v1.4.3
