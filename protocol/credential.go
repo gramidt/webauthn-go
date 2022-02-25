@@ -288,10 +288,10 @@ func GetMetadataStatement(pcc *ParsedCredentialCreationData, metadataService met
 		if err != nil {
 			return nil
 		}
-		metadataStatement := metadataService.U2FAuthenticator(attestationCertificateKeyIdentifier)
+		metadataStatement := metadataService.GetU2FAuthenticator(attestationCertificateKeyIdentifier)
 		return metadataStatement
 	} else {
-		metadataStatement := metadataService.WebAuthnAuthenticator(aaguid.String())
+		metadataStatement := metadataService.GetWebAuthnAuthenticator(aaguid.String())
 		return metadataStatement
 	}
 }

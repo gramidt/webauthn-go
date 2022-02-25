@@ -736,7 +736,7 @@ var defaultMetadataService = &TestMetadataService{}
 type TestMetadataService struct {
 }
 
-func (metadataService *TestMetadataService) WebAuthnAuthenticator(aaguid string) *metadata.MetadataStatement {
+func (metadataService *TestMetadataService) GetWebAuthnAuthenticator(aaguid string) *metadata.MetadataStatement {
 	if aaguid == "fa2b99dc-9e39-4257-8f92-4a30d23c4118" {
 		return metadataStatement
 	} else {
@@ -744,7 +744,7 @@ func (metadataService *TestMetadataService) WebAuthnAuthenticator(aaguid string)
 	}
 }
 
-func (metadataService *TestMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *metadata.MetadataStatement {
+func (metadataService *TestMetadataService) GetU2FAuthenticator(attestationCertificateKeyIdentifier string) *metadata.MetadataStatement {
 	return nil
 }
 

@@ -76,22 +76,29 @@ func (mds *SelfUpdatingMetaDataService) Update() error {
 	return nil
 }
 
-func (mds *SelfUpdatingMetaDataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
+func (mds *SelfUpdatingMetaDataService) GetWebAuthnAuthenticator(aaguid string) *MetadataStatement {
 	mds.mu.RLock()
 	defer mds.mu.RUnlock()
-	return mds.mds.WebAuthnAuthenticator(aaguid)
+	return mds.mds.GetWebAuthnAuthenticator(aaguid)
 }
 
-func (mds *SelfUpdatingMetaDataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
+func (mds *SelfUpdatingMetaDataService) GetU2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
 	mds.mu.RLock()
 	defer mds.mu.RUnlock()
-	return mds.mds.U2FAuthenticator(attestationCertificateKeyIdentifier)
+	return mds.mds.GetU2FAuthenticator(attestationCertificateKeyIdentifier)
 }
 
+// GetNextUpdateDate returns the date of the next scheduled update of the Metadata
 func (mds *SelfUpdatingMetaDataService) GetNextUpdateDate() string {
 	return mds.mds.GetNextUpdateDate()
 }
 
+// GetMetadataNumber returns the current number of the Metadata
 func (mds *SelfUpdatingMetaDataService) GetMetadataNumber() int {
 	return mds.mds.GetMetadataNumber()
+}
+
+// GetEntries returns All Metadata entries
+func (mds *SelfUpdatingMetaDataService) GetEntries() []MetadataBLOBPayloadEntry {
+	return mds.mds.Metadata.Entries
 }

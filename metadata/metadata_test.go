@@ -73,11 +73,11 @@ func TestSelfUpdatingMetadataService(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	statement := def.WebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
+	statement := def.GetWebAuthnAuthenticator("3b1adb99-0dfe-46fd-90b8-7f7614a4de2a")
 	if statement == nil {
 		t.Fail()
 	}
-	statement = def.U2FAuthenticator("fd36573d24be3f7f32ad5040271ab61035a1fcad")
+	statement = def.GetU2FAuthenticator("fd36573d24be3f7f32ad5040271ab61035a1fcad")
 	if statement == nil {
 		t.Fail()
 	}

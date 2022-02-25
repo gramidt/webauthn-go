@@ -87,10 +87,10 @@ func TestValidateRpPolicy(t *testing.T) {
 
 type testMetadataService struct{}
 
-func (service *testMetadataService) WebAuthnAuthenticator(aaguid string) *metadata.MetadataStatement {
+func (service *testMetadataService) GetWebAuthnAuthenticator(aaguid string) *metadata.MetadataStatement {
 	return nil
 }
-func (service *testMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *metadata.MetadataStatement {
+func (service *testMetadataService) GetU2FAuthenticator(attestationCertificateKeyIdentifier string) *metadata.MetadataStatement {
 	return nil
 }
 
