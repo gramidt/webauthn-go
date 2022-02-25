@@ -7,14 +7,18 @@ import (
 	"github.com/teamhanko/webauthn-go/metadata/certificate"
 )
 
+// MetadataService interface to get the MetadataStatement for Attestation verification
 type MetadataService interface {
-	WebAuthnAuthenticator(aaguid string) *MetadataStatement
-	U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement
+	// Get the MetadataStatement of an webauthn Authenticator
+	GetWebAuthnAuthenticator(aaguid string) *MetadataStatement
+	// Get the MetadataStatemtent of an U2F Authenticator
+	GetU2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement
 }
 
 //go:embed certificate/globalsign-root-ca.crt
 var FidoMdsRootCA []byte
 
+// InMemoryMetadataService keeps the Metadata in memory
 type InMemoryMetadataService struct {
 	Metadata *MetadataBLOBPayload
 }
@@ -48,7 +52,7 @@ func NewInMemoryMetadataService(jwtBytes []byte) (*InMemoryMetadataService, erro
 	return mds, nil
 }
 
-func (d *InMemoryMetadataService) WebAuthnAuthenticator(aaguid string) *MetadataStatement {
+func (d *InMemoryMetadataService) GetWebAuthnAuthenticator(aaguid string) *MetadataStatement {
 	for _, v := range d.Metadata.Entries {
 		if v.AaGUID == aaguid {
 			return &v.MetadataStatement
@@ -57,7 +61,7 @@ func (d *InMemoryMetadataService) WebAuthnAuthenticator(aaguid string) *Metadata
 	return nil
 }
 
-func (d *InMemoryMetadataService) U2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
+func (d *InMemoryMetadataService) GetU2FAuthenticator(attestationCertificateKeyIdentifier string) *MetadataStatement {
 	for _, v := range d.Metadata.Entries {
 		for _, w := range v.AttestationCertificateKeyIdentifiers {
 			if w == attestationCertificateKeyIdentifier {
